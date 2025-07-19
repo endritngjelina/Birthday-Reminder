@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Birthday Reminder System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(180deg); }
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .birthday-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideInUp 0.6s ease-out forwards;
+            transition: all 0.3s ease;
+        }
+        
+        .birthday-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        @keyframes slideInUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti-fall 3s linear infinite;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .input-glow:focus {
+            box-shadow: 0 0 20px rgba(139, 69, 19, 0.5);
+            border-color: #8b4513;
+        }
+        
+        .btn-gradient {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            background-size: 200% 200%;
+            animation: gradientMove 3s ease infinite;
+        }
+        
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .age-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .countdown-timer {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+        
+        .search-highlight {
+            background: rgba(255, 255, 0, 0.3);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Three.js Background Canvas -->
+    <canvas id="threeCanvas" class="three-canvas"></canvas>
+    
+    <!-- Notification Container -->
+    <div id="notification" class="notification">
+        <div class="glass-effect rounded-lg p-4 text-white">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-birthday-cake text-yellow-400"></i>
+                <span id="notificationText"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-6xl font-bold gradient-text mb-4 floating">
+                <i class="fas fa-birthday-cake mr-4"></i>
+                Birthday Reminder System
+            </h1>
+            <p class="text-white text-xl opacity-80">Never miss a special day again!</p>
+        </div>
+
+        <!-- Stats Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-effect rounded-xl p-6 text-center text-white">
+                <i class="fas fa-users text-3xl text-blue-300 mb-2"></i>
+                <div class="text-2xl font-bold" id="totalBirthdays">0</div>
+                <div class="text-sm opacity-80">Total Birthdays</div>
+            </div>
+            <div class="glass-effect rounded-xl p-6 text-center text-white">
+                <i class="fas fa-calendar-day text-3xl text-green-300 mb-2"></i>
+                <div class="text-2xl font-bold" id="todayBirthdays">0</div>
+                <div class="text-sm opacity-80">Today's Birthdays</div>
+            </div>
+            <div class="glass-effect rounded-xl p-6 text-center text-white">
+                <i class="fas fa-clock text-3xl text-yellow-300 mb-2"></i>
+                <div class="text-2xl font-bold" id="upcomingBirthdays">0</div>
+                <div class="text-sm opacity-80">This Week</div>
+            </div>
+            <div class="glass-effect rounded-xl p-6 text-center text-white">
+                <i class="fas fa-chart-line text-3xl text-purple-300 mb-2"></i>
+                <div class="text-2xl font-bold" id="averageAge">0</div>
+                <div class="text-sm opacity-80">Average Age</div>
+            </div>
+        </div>
+
+        <!-- Add Birthday Form -->
+        <div class="glass-effect rounded-2xl p-8 mb-8">
+            <h2 class="text-3xl font-bold text-white mb-6 flex items-center">
+                <i class="fas fa-plus-circle mr-3 text-green-400"></i>
+                Add New Birthday
+            </h2>
+            <form id="birthdayForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-white text-sm font-medium mb-2">
+                        <i class="fas fa-user mr-2"></i>Name
+                    </label>
+                    <input type="text" id="personName" 
+                           class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 input-glow focus:outline-none focus:border-white/40 transition-all duration-300" 
+                           placeholder="Enter person's name" required>
+                </div>
+                <div>
+                    <label class="block text-white text-sm font-medium mb-2">
+                        <i class="fas fa-calendar mr-2"></i>Birth Date
+                    </label>
+                    <input type="date" id="birthDate" 
+                           class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white input-glow focus:outline-none focus:border-white/40 transition-all duration-300" 
+                           required>
+                </div>
+                <div>
+                    <label class="block text-white text-sm font-medium mb-2">
+                        <i class="fas fa-envelope mr-2"></i>Email (Optional)
+                    </label>
+                    <input type="email" id="email" 
+                           class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 input-glow focus:outline-none focus:border-white/40 transition-all duration-300" 
+                           placeholder="email@example.com">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" 
+                            class="w-full btn-gradient text-white font-semibold py-3 px-6 rounded-lg hover:scale-105 transform transition-all duration-300 shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>Add Birthday
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="glass-effect rounded-2xl p-6 mb-8">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-3 text-white/60"></i>
+                        <input type="text" id="searchInput" 
+                               class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 input-glow focus:outline-none focus:border-white/40 transition-all duration-300" 
+                               placeholder="Search birthdays...">
+                    </div>
+                </div>
+                <select id="sortBy" 
+                        class="px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white input-glow focus:outline-none focus:border-white/40 transition-all duration-300">
+                    <option value="upcoming">Sort by Upcoming</option>
+                    <option value="name">Sort by Name</option>
+                    <option value="age">Sort by Age</option>
+                    <option value="month">Sort by Month</option>
+                </select>
+                <button id="toggleView" 
+                        class="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105">
+                    <i class="fas fa-th-large mr-2"></i>Grid View
+                </button>
+            </div>
+        </div>
+
+        <!-- Birthday List -->
+        <div id="birthdayContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-16 hidden">
+            <div class="glass-effect rounded-2xl p-12 mx-auto max-w-md">
+                <i class="fas fa-birthday-cake text-6xl text-white/40 mb-4"></i>
+                <h3 class="text-2xl font-bold text-white mb-2">No Birthdays Yet</h3>
+                <p class="text-white/60">Add your first birthday to get started!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Birthday Detail Modal -->
+    <div id="birthdayModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="glass-effect rounded-2xl p-8 m-4 max-w-md w-full">
+            <div class="text-center">
+                <div id="modalContent"></div>
+                <div class="mt-6 flex gap-3">
+                    <button id="editBirthday" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors">
+                        <i class="fas fa-edit mr-2"></i>Edit
+                    </button>
+                    <button id="deleteBirthday" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-colors">
+                        <i class="fas fa-trash mr-2"></i>Delete
+                    </button>
+                    <button id="closeModal" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Birthday data storage
+        let birthdays = JSON.parse(localStorage.getItem('birthdays')) || [];
+        let currentView = 'grid';
+        let editingId = null;
+
+        // Three.js Scene Setup
+        let scene, camera, renderer, particles = [];
+        
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('threeCanvas'), alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Create floating particles
+            const particleGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const particleMaterials = [
+                new THREE.MeshBasicMaterial({ color: 0xff6b6b }),
+                new THREE.MeshBasicMaterial({ color: 0x4ecdc4 }),
+                new THREE.MeshBasicMaterial({ color: 0x45b7d1 }),
+                new THREE.MeshBasicMaterial({ color: 0x96ceb4 }),
+                new THREE.MeshBasicMaterial({ color: 0xfeca57 })
+            ];
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = new THREE.Mesh(
+                    particleGeometry,
+                    particleMaterials[Math.floor(Math.random() * particleMaterials.length)]
+                );
+                particle.position.set(
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 20
+                );
+                particle.userData = {
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.02,
+                        (Math.random() - 0.5) * 0.02,
+                        (Math.random() - 0.5) * 0.02
+                    )
+                };
+                scene.add(particle);
+                particles.push(particle);
+            }
+            
+            camera.position.z = 10;
+            animate();
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            particles.forEach(particle => {
+                particle.position.add(particle.userData.velocity);
+                particle.rotation.x += 0.01;
+                particle.rotation.y += 0.01;
+                
+                // Boundary checking
+                if (Math.abs(particle.position.x) > 10) particle.userData.velocity.x *= -1;
+                if (Math.abs(particle.position.y) > 10) particle.userData.velocity.y *= -1;
+                if (Math.abs(particle.position.z) > 10) particle.userData.velocity.z *= -1;
+            });
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Utility functions
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+        
+        function calculateAge(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            
+            return age;
+        }
+        
+        function getDaysUntilBirthday(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            const thisYear = today.getFullYear();
+            
+            let nextBirthday = new Date(thisYear, birth.getMonth(), birth.getDate());
+            
+            if (nextBirthday < today) {
+                nextBirthday = new Date(thisYear + 1, birth.getMonth(), birth.getDate());
+            }
+            
+            const diffTime = nextBirthday - today;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.backgroundColor = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'][Math.floor(Math.random() * 5)];
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, 3000);
+            }
+        }
+        
+        // Main functions
+        function saveBirthdays() {
+            localStorage.setItem('birthdays', JSON.stringify(birthdays));
+            updateStats();
+        }
+        
+        function addBirthday(name, date, email = '') {
+            const birthday = {
+                id: generateId(),
+                name: name.trim(),
+                date: date,
+                email: email.trim(),
+                createdAt: new Date().toISOString()
+            };
+            
+            birthdays.push(birthday);
+            saveBirthdays();
+            renderBirthdays();
+            showNotification(`Added ${name}'s birthday!`);
+            
+            // Check if it's today
+            if (getDaysUntilBirthday(date) === 0) {
+                createConfetti();
+                showNotification(`🎉 It's ${name}'s birthday today!`, 'celebration');
+            }
+        }
+        
+        function deleteBirthday(id) {
+            const birthday = birthdays.find(b => b.id === id);
+            birthdays = birthdays.filter(b => b.id !== id);
+            saveBirthdays();
+            renderBirthdays();
+            showNotification(`Removed ${birthday.name}'s birthday`);
+        }
+        
+        function updateBirthday(id, name, date, email) {
+            const birthdayIndex = birthdays.findIndex(b => b.id === id);
+            if (birthdayIndex !== -1) {
+                birthdays[birthdayIndex] = {
+                    ...birthdays[birthdayIndex],
+                    name: name.trim(),
+                    date: date,
+                    email: email.trim()
+                };
+                saveBirthdays();
+                renderBirthdays();
+                showNotification(`Updated ${name}'s birthday!`);
+            }
+        }
+        
+        function searchBirthdays(query) {
+            return birthdays.filter(birthday => 
+                birthday.name.toLowerCase().includes(query.toLowerCase()) ||
+                birthday.email.toLowerCase().includes(query.toLowerCase())
+            );
+        }
+        
+        function sortBirthdays(birthdays, sortBy) {
+            switch (sortBy) {
+                case 'name':
+                    return birthdays.sort((a, b) => a.name.localeCompare(b.name));
+                case 'age':
+                    return birthdays.sort((a, b) => calculateAge(b.date) - calculateAge(a.date));
+                case 'month':
+                    return birthdays.sort((a, b) => new Date(a.date).getMonth() - new Date(b.date).getMonth());
+                case 'upcoming':
+                default:
+                    return birthdays.sort((a, b) => getDaysUntilBirthday(a.date) - getDaysUntilBirthday(b.date));
+            }
+        }
+        
+        function updateStats() {
+            const total = birthdays.length;
+            const today = birthdays.filter(b => getDaysUntilBirthday(b.date) === 0).length;
+            const thisWeek = birthdays.filter(b => {
+                const days = getDaysUntilBirthday(b.date);
+                return days >= 0 && days <= 7;
+            }).length;
+            const averageAge = total > 0 ? Math.round(birthdays.reduce((sum, b) => sum + calculateAge(b.date), 0) / total) : 0;
+            
+            document.getElementById('totalBirthdays').textContent = total;
+            document.getElementById('todayBirthdays').textContent = today;
+            document.getElementById('upcomingBirthdays').textContent = thisWeek;
+            document.getElementById('averageAge').textContent = averageAge;
+        }
+        
+        function renderBirthdays() {
+            const container = document.getElementById('birthdayContainer');
+            const emptyState = document.getElementById('emptyState');
+            const searchQuery = document.getElementById('searchInput').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            let filteredBirthdays = searchQuery ? searchBirthdays(searchQuery) : birthdays;
+            filteredBirthdays = sortBirthdays(filteredBirthdays, sortBy);
+            
+            if (filteredBirthdays.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = filteredBirthdays.map((birthday, index) => {
+                const age = calculateAge(birthday.date);
+                const daysUntil = getDaysUntilBirthday(birthday.date);
+                const isToday = daysUntil === 0;
+                const isThisWeek = daysUntil <= 7;
+                
+                return `
+                    <div class="birthday-card rounded-xl p-6 cursor-pointer relative ${isToday ? 'pulse-animation' : ''}" 
+                         style="animation-delay: ${index * 0.1}s"
+                         onclick="showBirthdayDetails('${birthday.id}')">
+                        <div class="age-badge">${age}</div>
+                        
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold text-white mb-1">${birthday.name}</h3>
+                                <p class="text-white/70 text-sm">
+                                    <i class="fas fa-calendar mr-2"></i>${formatDate(birthday.date)}
+                                </p>
+                                ${birthday.email ? `<p class="text-white/70 text-sm mt-1">
+                                    <i class="fas fa-envelope mr-2"></i>${birthday.email}
+                                </p>` : ''}
+                            </div>
+                            <div class="text-right">
+                                ${isToday ? 
+                                    `<span class="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                                        <i class="fas fa-birthday-cake mr-1"></i>TODAY!
+                                    </span>` :
+                                    `<div class="countdown-timer text-lg font-bold">
+                                        ${daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days`}
+                                    </div>`
+                                }
+                                ${isThisWeek && !isToday ? `<div class="text-yellow-400 text-sm mt-1">
+                                    <i class="fas fa-clock mr-1"></i>This week
+                                </div>` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center pt-4 border-t border-white/20">
+                            <span class="text-white/60 text-sm">Age: ${age} years old</span>
+                            <div class="flex space-x-2">
+                                <button onclick="event.stopPropagation(); editBirthdayForm('${birthday.id}')" 
+                                        class="text-blue-400 hover:text-blue-300 transition-colors">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); deleteBirthday('${birthday.id}')" 
+                                        class="text-red-400 hover:text-red-300 transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function showBirthdayDetails(id) {
+            const birthday = birthdays.find(b => b.id === id);
+            if (!birthday) return;
+            
+            const age = calculateAge(birthday.date);
+            const daysUntil = getDaysUntilBirthday(birthday.date);
+            const isToday = daysUntil === 0;
+            
+            const modal = document.getElementById('birthdayModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                <div class="text-center">
+                    <div class="text-6xl mb-4">🎂</div>
+                    <h2 class="text-2xl font-bold text-white mb-2">${birthday.name}</h2>
+                    <p class="text-white/70 mb-4">Born on ${formatDate(birthday.date)}</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="glass-effect rounded-lg p-4">
+                            <div class="text-2xl font-bold text-white">${age}</div>
+                            <div class="text-white/60 text-sm">Years Old</div>
+                        </div>
+                        <div class="glass-effect rounded-lg p-4">
+                            <div class="text-2xl font-bold text-white ${isToday ? 'text-red-400' : ''}">${isToday ? 'TODAY!' : daysUntil}</div>
+                            <div class="text-white/60 text-sm">${isToday ? 'Birthday' : 'Days Until'}</div>
+                        </div>
+                    </div>
+                    
+                    ${birthday.email ? `<p class="text-white/70 mb-4">
+                        <i class="fas fa-envelope mr-2"></i>${birthday.email}
+                    </p>` : ''}
+                </div>
+            `;
+            
+            document.getElementById('editBirthday').onclick = () => {
+                modal.classList.add('hidden');
+                editBirthdayForm(id);
+            };
+            
+            document.getElementById('deleteBirthday').onclick = () => {
+            if (confirm(`Are you sure you want to delete ${birthday.name}'s birthday?`)) {
+                deleteBirthday(id);
+                modal.classList.add('hidden');
+            }
+        };
+    }
+        
+        document.getElementById('closeModal').onclick = () => {
+            modal.classList.add('hidden');
+        };
+
+        function editBirthdayForm(id) {
+            const birthday = birthdays.find(b => b.id === id);
+            if (!birthday) return;
+            
+            editingId = id;
+            
+            // Populate form
+            document.getElementById('personName').value = birthday.name;
+            document.getElementById('birthDate').value = birthday.date.split('T')[0];
+            document.getElementById('email').value = birthday.email || '';
+            
+            // Update form button
+            const submitBtn = document.querySelector('#birthdayForm button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Update Birthday';
+            submitBtn.classList.replace('btn-gradient', 'bg-teal-500');
+            
+            // Scroll to form
+            document.getElementById('birthdayForm').scrollIntoView({ behavior: 'smooth' });
+        }
+        // Initialize Three.js
+        initThreeJS();
+        
+        // Event Listeners
+        document.getElementById('birthdayForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('personName').value;
+            const date = document.getElementById('birthDate').value;
+            const email = document.getElementById('email').value;
+            
+            if (editingId) {
+                updateBirthday(editingId, name, date, email);
+                editingId = null;
+                
+                // Reset form button
+                const submitBtn = document.querySelector('#birthdayForm button[type="submit"]');
+                submitBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Add Birthday';
+                submitBtn.classList.replace('bg-teal-500', 'btn-gradient');
+            } else {
+                addBirthday(name, date, email);
+            }
+            
+            this.reset();
+        });
+        
+        document.getElementById('searchInput').addEventListener('input', renderBirthdays);
+        document.getElementById('sortBy').addEventListener('change', renderBirthdays);
+        
+        document.getElementById('toggleView').addEventListener('click', function() {
+            const container = document.getElementById('birthdayContainer');
+            const btnIcon = this.querySelector('i');
+            if (currentView === 'grid') {
+                container.classList.replace('grid-cols-1', 'grid-cols-1');
+                container.classList.remove('md:grid-cols-2', 'lg:grid-cols-3');
+                this.innerHTML = '<i class="fas fa-th-list mr-2"></i>Grid View';
+                currentView = 'list';
+                btnIcon.classList.replace('fa-th-large', 'fa-th-list');
+            } else {
+                container.classList.replace('grid-cols-1', 'grid-cols-1');
+                container.classList.add('md:grid-cols-2', 'lg:grid-cols-3');
+                this.innerHTML = '<i class="fas fa-th-large mr-2"></i>List View';
+                currentView = 'grid';
+                btnIcon.classList.replace('fa-th-list', 'fa-th-large');
+            }
+        });
+
+        // Highlight today's birthdays
+        function highlightTodayBirthdays() {
+            birthdays.forEach(birthday => {
+                if (getDaysUntilBirthday(birthday.date) === 0) {
+                    showNotification(`🎉 Today is ${birthday.name}'s birthday!`, 'celebration');
+                    createConfetti();
+                }
+            });
+        }
+
+        // Initial rendering
+        renderBirthdays();
+        updateStats();
+        highlightTodayBirthdays();
+        // Window resize handler for Three.js
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
