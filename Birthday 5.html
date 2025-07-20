@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Birthday Reminder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.4s ease;
+        }
+        
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+        
+        .birthday-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .birthday-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.8s ease;
+        }
+        
+        .birthday-card:hover::before {
+            left: 100%;
+        }
+        
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(45deg, #ffd700, #ff6b6b, #4ecdc4, #45b7d1);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .btn-premium {
+            background: linear-gradient(45deg, #ff6b6b, #ffd700);
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-premium:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+        }
+        
+        .btn-premium::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-premium:active::after {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .countdown-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(102, 126, 234, 0.5); }
+            to { box-shadow: 0 0 20px rgba(118, 75, 162, 0.8); }
+        }
+        
+        .confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .age-display {
+            background: linear-gradient(45deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+        
+        .zodiac-icon {
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+        }
+        
+        #three-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .search-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .search-box:focus {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="three-bg"></div>
+    <canvas id="confetti" class="confetti-canvas"></canvas>
+    
+    <!-- Notification System -->
+    <div id="notification" class="notification glass-morphism rounded-xl p-4 max-w-sm">
+        <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0">
+                <i id="notif-icon" class="text-2xl"></i>
+            </div>
+            <div>
+                <p id="notif-title" class="text-white font-semibold"></p>
+                <p id="notif-message" class="text-gray-200 text-sm"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 relative z-10">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-6xl font-bold gradient-text mb-4 floating-animation">
+                🎉 Ultimate Birthday Reminder 🎂
+            </h1>
+            <p class="text-white text-xl opacity-90">Never miss a special day again!</p>
+        </div>
+
+        <!-- Statistics Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="stats-card rounded-2xl p-6 text-center">
+                <div class="text-3xl mb-2">👥</div>
+                <div class="text-2xl font-bold text-white" id="total-birthdays">0</div>
+                <div class="text-gray-300">Total Birthdays</div>
+            </div>
+            <div class="stats-card rounded-2xl p-6 text-center">
+                <div class="text-3xl mb-2">🎈</div>
+                <div class="text-2xl font-bold text-yellow-400" id="upcoming-count">0</div>
+                <div class="text-gray-300">This Month</div>
+            </div>
+            <div class="stats-card rounded-2xl p-6 text-center">
+                <div class="text-3xl mb-2">🎯</div>
+                <div class="text-2xl font-bold text-green-400" id="today-count">0</div>
+                <div class="text-gray-300">Today</div>
+            </div>
+            <div class="stats-card rounded-2xl p-6 text-center">
+                <div class="text-3xl mb-2">⭐</div>
+                <div class="text-2xl font-bold text-purple-400" id="next-birthday">-</div>
+                <div class="text-gray-300">Next Birthday</div>
+            </div>
+        </div>
+
+        <!-- Add Birthday Form -->
+        <div class="glass-morphism rounded-3xl p-8 mb-8">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center">
+                <i class="fas fa-plus-circle mr-3"></i>Add New Birthday
+            </h2>
+            <form id="birthday-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-white font-semibold mb-2">
+                            <i class="fas fa-user mr-2"></i>Name
+                        </label>
+                        <input type="text" id="name-input" 
+                               class="w-full px-4 py-3 rounded-xl search-box text-white placeholder-gray-300 focus:outline-none"
+                               placeholder="Enter person's name" required>
+                    </div>
+                    <div>
+                        <label class="block text-white font-semibold mb-2">
+                            <i class="fas fa-calendar mr-2"></i>Birthday
+                        </label>
+                        <input type="date" id="date-input" 
+                               class="w-full px-4 py-3 rounded-xl search-box text-white focus:outline-none" required>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-white font-semibold mb-2">
+                            <i class="fas fa-envelope mr-2"></i>Email (Optional)
+                        </label>
+                        <input type="email" id="email-input" 
+                               class="w-full px-4 py-3 rounded-xl search-box text-white placeholder-gray-300 focus:outline-none"
+                               placeholder="example@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-white font-semibold mb-2">
+                            <i class="fas fa-phone mr-2"></i>Phone (Optional)
+                        </label>
+                        <input type="tel" id="phone-input" 
+                               class="w-full px-4 py-3 rounded-xl search-box text-white placeholder-gray-300 focus:outline-none"
+                               placeholder="+1 (555) 123-4567">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-white font-semibold mb-2">
+                        <i class="fas fa-sticky-note mr-2"></i>Notes (Optional)
+                    </label>
+                    <textarea id="notes-input" 
+                              class="w-full px-4 py-3 rounded-xl search-box text-white placeholder-gray-300 focus:outline-none resize-none"
+                              rows="3" placeholder="Gift ideas, relationship, etc."></textarea>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn-premium px-8 py-4 rounded-xl text-white font-bold text-lg transform transition-all duration-300 hover:scale-105">
+                        <i class="fas fa-gift mr-2"></i>Add Birthday Celebration
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="glass-morphism rounded-3xl p-6 mb-8">
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="flex-1">
+                    <div class="relative">
+                        <input type="text" id="search-input" 
+                               class="w-full px-4 py-3 pl-12 rounded-xl search-box text-white placeholder-gray-300 focus:outline-none"
+                               placeholder="Search birthdays...">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-300"></i>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button id="filter-all" class="px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold">All</button>
+                    <button id="filter-today" class="px-4 py-2 rounded-lg glass-card text-white font-semibold">Today</button>
+                    <button id="filter-week" class="px-4 py-2 rounded-lg glass-card text-white font-semibold">This Week</button>
+                    <button id="filter-month" class="px-4 py-2 rounded-lg glass-card text-white font-semibold">This Month</button>
+                </div>
+                <button id="sort-btn" class="px-4 py-2 rounded-lg glass-card text-white font-semibold">
+                    <i class="fas fa-sort mr-2"></i>Sort by Date
+                </button>
+            </div>
+        </div>
+
+        <!-- Birthday List -->
+        <div class="glass-morphism rounded-3xl p-8">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center">
+                <i class="fas fa-birthday-cake mr-3"></i>Birthday Calendar
+            </h2>
+            <div id="birthday-list" class="space-y-4">
+                <!-- Birthday cards will be inserted here -->
+            </div>
+            <div id="empty-state" class="text-center py-12 hidden">
+                <div class="text-6xl mb-4 opacity-50">🎂</div>
+                <p class="text-white text-xl opacity-75">No birthdays added yet!</p>
+                <p class="text-gray-300 opacity-50">Add your first birthday above to get started.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let birthdays = JSON.parse(localStorage.getItem('birthdays')) || [];
+        let currentFilter = 'all';
+        let sortOrder = 'date';
+        let scene, camera, renderer, particles = [];
+
+        // Initialize Three.js background
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('three-bg').appendChild(renderer.domElement);
+
+            // Create floating particles
+            const particleGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const particleMaterials = [
+                new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.6 }),
+                new THREE.MeshBasicMaterial({ color: 0xff6b6b, transparent: true, opacity: 0.6 }),
+                new THREE.MeshBasicMaterial({ color: 0x4ecdc4, transparent: true, opacity: 0.6 }),
+                new THREE.MeshBasicMaterial({ color: 0x45b7d1, transparent: true, opacity: 0.6 })
+            ];
+
+            for (let i = 0; i < 100; i++) {
+                const particle = new THREE.Mesh(
+                    particleGeometry,
+                    particleMaterials[Math.floor(Math.random() * particleMaterials.length)]
+                );
+                particle.position.set(
+                    (Math.random() - 0.5) * 100,
+                    (Math.random() - 0.5) * 100,
+                    (Math.random() - 0.5) * 100
+                );
+                particle.userData = {
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.02,
+                        (Math.random() - 0.5) * 0.02,
+                        (Math.random() - 0.5) * 0.02
+                    )
+                };
+                scene.add(particle);
+                particles.push(particle);
+            }
+
+            camera.position.z = 50;
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            particles.forEach(particle => {
+                particle.position.add(particle.userData.velocity);
+                particle.rotation.x += 0.01;
+                particle.rotation.y += 0.01;
+                
+                // Boundary check
+                if (Math.abs(particle.position.x) > 50) particle.userData.velocity.x *= -1;
+                if (Math.abs(particle.position.y) > 50) particle.userData.velocity.y *= -1;
+                if (Math.abs(particle.position.z) > 50) particle.userData.velocity.z *= -1;
+            });
+            
+            renderer.render(scene, camera);
+        }
+
+        // Confetti system
+        function createConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const confetti = [];
+            const colors = ['#ff6b6b', '#ffd700', '#4ecdc4', '#45b7d1', '#ff8c00', '#9b59b6'];
+
+            for (let i = 0; i < 50; i++) {
+                confetti.push({
+                    x: Math.random() * canvas.width,
+                    y: -10,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: Math.random() * 3 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 6 + 4,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: (Math.random() - 0.5) * 10
+                });
+            }
+
+            function animateConfetti() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                confetti.forEach((piece, index) => {
+                    piece.x += piece.vx;
+                    piece.y += piece.vy;
+                    piece.rotation += piece.rotationSpeed;
+                    
+                    ctx.save();
+                    ctx.translate(piece.x, piece.y);
+                    ctx.rotate(piece.rotation * Math.PI / 180);
+                    ctx.fillStyle = piece.color;
+                    ctx.fillRect(-piece.size/2, -piece.size/2, piece.size, piece.size);
+                    ctx.restore();
+                    
+                    if (piece.y > canvas.height) {
+                        confetti.splice(index, 1);
+                    }
+                });
+                
+                if (confetti.length > 0) {
+                    requestAnimationFrame(animateConfetti);
+                }
+            }
+            
+            animateConfetti();
+        }
+
+        // Zodiac signs
+        const zodiacSigns = {
+            'Aries': { dates: [3, 21, 4, 19], symbol: '♈', element: 'Fire' },
+            'Taurus': { dates: [4, 20, 5, 20], symbol: '♉', element: 'Earth' },
+            'Gemini': { dates: [5, 21, 6, 20], symbol: '♊', element: 'Air' },
+            'Cancer': { dates: [6, 21, 7, 22], symbol: '♋', element: 'Water' },
+            'Leo': { dates: [7, 23, 8, 22], symbol: '♌', element: 'Fire' },
+            'Virgo': { dates: [8, 23, 9, 22], symbol: '♍', element: 'Earth' },
+            'Libra': { dates: [9, 23, 10, 22], symbol: '♎', element: 'Air' },
+            'Scorpio': { dates: [10, 23, 11, 21], symbol: '♏', element: 'Water' },
+            'Sagittarius': { dates: [11, 22, 12, 21], symbol: '♐', element: 'Fire' },
+            'Capricorn': { dates: [12, 22, 1, 19], symbol: '♑', element: 'Earth' },
+            'Aquarius': { dates: [1, 20, 2, 18], symbol: '♒', element: 'Air' },
+            'Pisces': { dates: [2, 19, 3, 20], symbol: '♓', element: 'Water' }
+        };
+
+        function getZodiacSign(month, day) {
+            for (const [sign, data] of Object.entries(zodiacSigns)) {
+                const [startMonth, startDay, endMonth, endDay] = data.dates;
+                if ((month === startMonth && day >= startDay) || 
+                    (month === endMonth && day <= endDay) ||
+                    (startMonth > endMonth && (month === startMonth || month === endMonth))) {
+                    return { sign, symbol: data.symbol, element: data.element };
+                }
+            }
+            return { sign: 'Unknown', symbol: '❓', element: 'Unknown' };
+        }
+
+        // Date utilities
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { 
+                month: 'long', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        function getDaysUntilBirthday(birthdayStr) {
+            const today = new Date();
+            const birthday = new Date(birthdayStr);
+            const thisYear = today.getFullYear();
+            
+            let nextBirthday = new Date(thisYear, birthday.getMonth(), birthday.getDate());
+            
+            if (nextBirthday < today) {
+                nextBirthday = new Date(thisYear + 1, birthday.getMonth(), birthday.getDate());
+            }
+            
+            const diffTime = nextBirthday - today;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function calculateAge(birthdayStr) {
+            const today = new Date();
+            const birthday = new Date(birthdayStr);
+            let age = today.getFullYear() - birthday.getFullYear();
+            const monthDiff = today.getMonth() - birthday.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthday.getDate())) {
+                age--;
+            }
+            
+            return age;
+        }
+
+        function isBirthdayToday(birthdayStr) {
+            const today = new Date();
+            const birthday = new Date(birthdayStr);
+            return today.getMonth() === birthday.getMonth() && 
+                   today.getDate() === birthday.getDate();
+        }
+
+        function isBirthdayThisWeek(birthdayStr) {
+            const daysUntil = getDaysUntilBirthday(birthdayStr);
+            return daysUntil <= 7;
+        }
+
+        function isBirthdayThisMonth(birthdayStr) {
+            const today = new Date();
+            const birthday = new Date(birthdayStr);
+            return today.getMonth() === birthday.getMonth();
+        }
+
+        // Notification system
+        function showNotification(title, message, icon, type = 'info') {
+            const notification = document.getElementById('notification');
+            const iconEl = document.getElementById('notif-icon');
+            const titleEl = document.getElementById('notif-title');
+            const messageEl = document.getElementById('notif-message');
+
+            iconEl.className = `${icon} text-2xl`;
+            iconEl.style.color = type === 'success' ? '#10b981' : 
+                               type === 'warning' ? '#f59e0b' : 
+                               type === 'error' ? '#ef4444' : '#3b82f6';
+            
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Birthday management
+        function addBirthday(name, date, email = '', phone = '', notes = '') {
+            const birthday = {
+                id: Date.now(),
+                name: name.trim(),
+                date: date,
+                email: email.trim(),
+                phone: phone.trim(),
+                notes: notes.trim(),
+                dateAdded: new Date().toISOString()
+            };
+            
+            birthdays.push(birthday);
+            saveBirthdays();
+            renderBirthdays();
+            updateStats();
+            
+            showNotification(
+                'Birthday Added! 🎉',
+                `${name}'s birthday has been added successfully!`,
+                'fas fa-birthday-cake',
+                'success'
+            );
+            
+            // Check if it's today
+            if (isBirthdayToday(date)) {
+                createConfetti();
+                showNotification(
+                    'Birthday Today! 🎂',
+                    `It's ${name}'s birthday today!`,
+                    'fas fa-gift',
+                    'warning'
+                );
+            }
+        }
+
+        function deleteBirthday(id) {
+            const birthday = birthdays.find(b => b.id === id);
+            birthdays = birthdays.filter(b => b.id !== id);
+            saveBirthdays();
+            renderBirthdays();
+            updateStats();
+            
+            showNotification(
+                'Birthday Removed',
+                `${birthday.name}'s birthday has been removed.`,
+                'fas fa-trash',
+                'error'
+            );
+        }
+
+        function saveBirthdays() {
+            localStorage.setItem('birthdays', JSON.stringify(birthdays));
+        }
+
+        // Rendering
+        function renderBirthdays() {
+            const container = document.getElementById('birthday-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            let filteredBirthdays = [...birthdays];
+            
+            // Apply search filter
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            if (searchTerm) {
+                filteredBirthdays = filteredBirthdays.filter(b => 
+                    b.name.toLowerCase().includes(searchTerm) ||
+                    b.notes.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Apply date filter
+            switch (currentFilter) {
+                case 'today':
+                    filteredBirthdays = filteredBirthdays.filter(b => isBirthdayToday(b.date));
+                    break;
+                case 'week':
+                    filteredBirthdays = filteredBirthdays.filter(b => isBirthdayThisWeek(b.date));
+                    break;
+                case 'month':
+                    filteredBirthdays = filteredBirthdays.filter(b => isBirthdayThisMonth(b.date));
+                    break;
+            }
+            
+            // Sort birthdays
+            if (sortOrder === 'date') {
+                filteredBirthdays.sort((a, b) => getDaysUntilBirthday(a.date) - getDaysUntilBirthday(b.date));
+            } else if (sortOrder === 'name') {
+                filteredBirthdays.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            
+            if (filteredBirthdays.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = filteredBirthdays.map(birthday => {
+                const daysUntil = getDaysUntilBirthday(birthday.date);
+                const age = calculateAge(birthday.date);
+                const zodiac = getZodiacSign(new Date(birthday.date).getMonth() + 1, new Date(birthday.date).getDate());
+                const isToday = isBirthdayToday(birthday.date);
+                
+                let countdownBadge = '';
+                if (isToday) {
+                    countdownBadge = '<span class="countdown-badge pulse-animation px-3 py-1 rounded-full text-white text-sm font-bold">🎉 TODAY!</span>';
+                } else if (daysUntil === 1) {
+                    countdownBadge = '<span class="countdown-badge px-3 py-1 rounded-full text-white text-sm font-bold">Tomorrow</span>';
+                } else if (daysUntil <= 7) {
+                    countdownBadge = `<span class="countdown-badge px-3 py-1 rounded-full text-white text-sm font-bold">${daysUntil} days</span>`;
+                } else {
+                    countdownBadge = `<span class="px-3 py-1 rounded-full bg-gray-600 text-white text-sm">${daysUntil} days</span>`;
+                }
+                
+                return `
+                    <div class="birthday-card glass-card rounded-2xl p-6 ${isToday ? 'pulse-animation' : ''}" data-id="${birthday.id}">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-2xl font-bold text-white">
+                                    ${birthday.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 class="text-2xl font-bold text-white">${birthday.name}</h3>
+                                    <p class="text-gray-300">${formatDate(birthday.date)}</p>
+                                    <div class="flex items-center space-x-2 mt-1">
+                                        <span class="zodiac-icon text-lg">${zodiac.symbol}</span>
+                                        <span class="text-sm text-gray-300">${zodiac.sign} • ${zodiac.element}</span>
+                                        <span class="age-display text-lg font-bold">${age} years old</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                ${countdownBadge}
+                                <div class="mt-2 space-x-2">
+                                    <button onclick="editBirthday(${birthday.id})" class="text-blue-400 hover:text-blue-300 text-lg">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="deleteBirthday(${birthday.id})" class="text-red-400 hover:text-red-300 text-lg">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${birthday.email || birthday.phone || birthday.notes ? `
+                        <div class="mt-4 pt-4 border-t border-gray-600">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                ${birthday.email ? `
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-envelope text-blue-400"></i>
+                                    <a href="mailto:${birthday.email}" class="text-blue-300 hover:text-blue-200">${birthday.email}</a>
+                                </div>
+                                ` : ''}
+                                ${birthday.phone ? `
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-phone text-green-400"></i>
+                                    <a href="tel:${birthday.phone}" class="text-green-300 hover:text-green-200">${birthday.phone}</a>
+                                </div>
+                                ` : ''}
+                                ${birthday.notes ? `
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-sticky-note text-yellow-400"></i>
+                                    <span class="text-gray-300">${birthday.notes}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="sendBirthdayWish(${birthday.id})" class="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-300">
+                                <i class="fas fa-heart mr-2"></i>Send Wish
+                            </button>
+                            <button onclick="setReminder(${birthday.id})" class="flex-1 bg-gradient-to-r from-blue-500 to-teal-500 text-white py-2 px-4 rounded-lg hover:from-blue-600 hover:to-teal-600 transition-all duration-300">
+                                <i class="fas fa-bell mr-2"></i>Set Reminder
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const totalBirthdays = birthdays.length;
+            const upcomingThisMonth = birthdays.filter(b => isBirthdayThisMonth(b.date)).length;
+            const todayCount = birthdays.filter(b => isBirthdayToday(b.date)).length;
+            
+            // Find next birthday
+            let nextBirthday = '-';
+            if (birthdays.length > 0) {
+                const sortedByDays = [...birthdays].sort((a, b) => 
+                    getDaysUntilBirthday(a.date) - getDaysUntilBirthday(b.date)
+                );
+                const next = sortedByDays[0];
+                const daysUntil = getDaysUntilBirthday(next.date);
+                nextBirthday = daysUntil === 0 ? 'Today!' : 
+                              daysUntil === 1 ? 'Tomorrow' : 
+                              `${daysUntil} days`;
+            }
+            
+            document.getElementById('total-birthdays').textContent = totalBirthdays;
+            document.getElementById('upcoming-count').textContent = upcomingThisMonth;
+            document.getElementById('today-count').textContent = todayCount;
+            document.getElementById('next-birthday').textContent = nextBirthday;
+        }
+
+        // Additional functions
+        function editBirthday(id) {
+            const birthday = birthdays.find(b => b.id === id);
+            if (!birthday) return;
+            
+            document.getElementById('name-input').value = birthday.name;
+            document.getElementById('date-input').value = birthday.date;
+            document.getElementById('email-input').value = birthday.email;
+            document.getElementById('phone-input').value = birthday.phone;
+            document.getElementById('notes-input').value = birthday.notes;
+            
+            // Remove the birthday temporarily for editing
+            deleteBirthday(id);
+            
+            // Scroll to form
+            document.getElementById('birthday-form').scrollIntoView({ behavior: 'smooth' });
+            
+            showNotification(
+                'Edit Mode',
+                `You can now edit ${birthday.name}'s information.`,
+                'fas fa-edit',
+                'info'
+            );
+        }
+
+        function sendBirthdayWish(id) {
+            const birthday = birthdays.find(b => b.id === id);
+            if (!birthday) return;
+            
+            const message = `Happy Birthday ${birthday.name}! 🎉🎂 Hope you have a wonderful day filled with joy and celebration!`;
+            
+            if (birthday.email) {
+                const subject = `Happy Birthday ${birthday.name}!`;
+                const mailtoLink = `mailto:${birthday.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+                window.open(mailtoLink);
+            } else if (birthday.phone) {
+                const smsLink = `sms:${birthday.phone}?body=${encodeURIComponent(message)}`;
+                window.open(smsLink);
+            } else {
+                // Copy to clipboard
+                navigator.clipboard.writeText(message).then(() => {
+                    showNotification(
+                        'Message Copied!',
+                        'Birthday wish copied to clipboard.',
+                        'fas fa-copy',
+                        'success'
+                    );
+                });
+            }
+        }
+
+        function setReminder(id) {
+            const birthday = birthdays.find(b => b.id === id);
+            if (!birthday) return;
+            
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        const daysUntil = getDaysUntilBirthday(birthday.date);
+                        const reminderDate = new Date();
+                        reminderDate.setDate(reminderDate.getDate() + daysUntil - 1); // Remind 1 day before
+                        
+                        showNotification(
+                            'Reminder Set!',
+                            `You'll be reminded about ${birthday.name}'s birthday.`,
+                            'fas fa-bell',
+                            'success'
+                        );
+                    }
+                });
+            }
+        }
+
+        // Event listeners
+        document.getElementById('birthday-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name-input').value;
+            const date = document.getElementById('date-input').value;
+            const email = document.getElementById('email-input').value;
+            const phone = document.getElementById('phone-input').value;
+            const notes = document.getElementById('notes-input').value;
+            
+            if (name && date) {
+                addBirthday(name, date, email, phone, notes);
+                this.reset();
+            }
+        });
+
+        document.getElementById('search-input').addEventListener('input', renderBirthdays);
+
+        // Filter buttons
+        document.getElementById('filter-all').addEventListener('click', function() {
+            currentFilter = 'all';
+            updateFilterButtons();
+            renderBirthdays();
+        });
+
+        document.getElementById('filter-today').addEventListener('click', function() {
+            currentFilter = 'today';
+            updateFilterButtons();
+            renderBirthdays();
+        });
+
+        document.getElementById('filter-week').addEventListener('click', function() {
+            currentFilter = 'week';
+            updateFilterButtons();
+            renderBirthdays();
+        });
+
+        document.getElementById('filter-month').addEventListener('click', function() {
+            currentFilter = 'month';
+            updateFilterButtons();
+            renderBirthdays();
+        });
+
+        document.getElementById('sort-btn').addEventListener('click', function() {
+            sortOrder = sortOrder === 'date' ? 'name' : 'date';
+            this.innerHTML = sortOrder === 'date' ? 
+                '<i class="fas fa-sort mr-2"></i>Sort by Date' : 
+                '<i class="fas fa-sort-alpha-down mr-2"></i>Sort by Name';
+            renderBirthdays();
+        });
+
+        function updateFilterButtons() {
+            const buttons = ['filter-all', 'filter-today', 'filter-week', 'filter-month'];
+            buttons.forEach(id => {
+                const btn = document.getElementById(id);
+                if (id === `filter-${currentFilter}`) {
+                    btn.className = 'px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold';
+                } else {
+                    btn.className = 'px-4 py-2 rounded-lg glass-card text-white font-semibold';
+                }
+            });
+        }
+
+        // Resize handler for Three.js
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            const canvas = document.getElementById('confetti');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Check for birthdays today on load
+        function checkTodaysBirthdays() {
+            const todaysBirthdays = birthdays.filter(b => isBirthdayToday(b.date));
+            
+            if (todaysBirthdays.length > 0) {
+                createConfetti();
+                todaysBirthdays.forEach(birthday => {
+                    setTimeout(() => {
+                        showNotification(
+                            `🎉 Birthday Today!`,
+                            `It's ${birthday.name}'s birthday today!`,
+                            'fas fa-birthday-cake',
+                            'warning'
+                        );
+                    }, 2000);
+                });
+            }
+        }
+
+        // Initialize app
+        function init() {
+            initThreeJS();
+            renderBirthdays();
+            updateStats();
+            checkTodaysBirthdays();
+            
+            // Show welcome message
+            setTimeout(() => {
+                showNotification(
+                    'Welcome to Birthday Reminder! 🎉',
+                    'Never miss a special day again!',
+                    'fas fa-gift',
+                    'info'
+                );
+            }, 1000);
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
