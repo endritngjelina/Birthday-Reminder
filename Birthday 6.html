@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Birthday Reminder - 3D Experience</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --dark: #1a1a2e;
+            --light: #eee;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #4facfe);
+            background-size: 400% 400%;
+            animation: gradientFlow 15s ease infinite;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.1; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.3; }
+        }
+
+        /* Glass morphism container */
+        .glass-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 35px 65px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, #fff, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(255, 255, 255, 0.3); }
+            to { text-shadow: 0 0 30px rgba(255, 255, 255, 0.6); }
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+
+        /* Three.js container */
+        #threejs-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Form styling */
+        .form-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            color: white;
+            padding: 1rem;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: scale(1.02);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        .btn-custom:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-custom::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-custom:hover::before {
+            left: 100%;
+        }
+
+        /* Birthday cards */
+        .birthday-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .birthday-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #f093fb, #4facfe);
+            background-size: 200% 100%;
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .birthday-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .birthday-card.today {
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.3), rgba(245, 87, 108, 0.3));
+            animation: celebrate 2s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(240, 147, 251, 0.5);
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .birthday-card.upcoming {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.3), rgba(0, 242, 254, 0.3));
+        }
+
+        .card-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-date {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-countdown {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+
+        .delete-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Statistics */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            display: block;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Search and filter */
+        .search-filter {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transform: scale(1.05);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .form-container {
+                padding: 1rem;
+            }
+            
+            .birthday-card {
+                padding: 1rem;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 1s ease;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Confetti animation */
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f093fb;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Animated Background -->
+    <div class="bg-animation"></div>
+    
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Three.js Container -->
+    <div id="threejs-container"></div>
+
+    <!-- Main Container -->
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-birthday-cake"></i> Ultimate Birthday Reminder</h1>
+            <p>Never miss a special day again - with style and elegance</p>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <span class="stat-number" id="totalBirthdays">0</span>
+                <div class="stat-label">Total Birthdays</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="todayBirthdays">0</span>
+                <div class="stat-label">Today</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="upcomingBirthdays">0</span>
+                <div class="stat-label">This Week</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="thisMonthBirthdays">0</span>
+                <div class="stat-label">This Month</div>
+            </div>
+        </div>
+
+        <!-- Add Birthday Form -->
+        <div class="form-container glass-container">
+            <h3 class="text-white mb-4"><i class="fas fa-plus-circle"></i> Add New Birthday</h3>
+            <form id="birthdayForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <input type="text" class="form-control" id="personName" placeholder="Person's Name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <input type="date" class="form-control" id="birthDate" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <input type="email" class="form-control" id="personEmail" placeholder="Email (optional)">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <select class="form-control" id="relationship">
+                            <option value="">Relationship (optional)</option>
+                            <option value="Family">Family</option>
+                            <option value="Friend">Friend</option>
+                            <option value="Colleague">Colleague</option>
+                            <option value="Partner">Partner</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <textarea class="form-control" id="notes" placeholder="Special notes or wishes..." rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-custom w-100">
+                    <i class="fas fa-gift"></i> Add Birthday
+                </button>
+            </form>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="search-filter">
+            <div class="row align-items-center">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search birthdays...">
+                </div>
+                <div class="col-md-6">
+                    <div class="text-end">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="today">Today</button>
+                        <button class="filter-btn" data-filter="upcoming">Upcoming</button>
+                        <button class="filter-btn" data-filter="month">This Month</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Birthday List -->
+        <div class="glass-container">
+            <h3 class="text-white mb-4"><i class="fas fa-calendar-alt"></i> Birthday List</h3>
+            <div id="birthdayList"></div>
+            <div id="emptyState" class="text-center py-5" style="display: none;">
+                <i class="fas fa-birthday-cake" style="font-size: 4rem; color: rgba(255,255,255,0.3); margin-bottom: 1rem;"></i>
+                <h4 style="color: rgba(255,255,255,0.7);">No birthdays yet!</h4>
+                <p style="color: rgba(255,255,255,0.5);">Add your first birthday above to get started.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confetti Container -->
+    <div class="confetti" id="confetti"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Birthday App Class
+        class BirthdayApp {
+            constructor() {
+                this.birthdays = this.loadBirthdays();
+                this.currentFilter = 'all';
+                this.searchTerm = '';
+                this.init();
+            }
+
+            init() {
+                this.createParticles();
+                this.initThreeJS();
+                this.bindEvents();
+                this.renderBirthdays();
+                this.updateStats();
+                this.checkTodayBirthdays();
+                
+                // Hide loading screen
+                setTimeout(() => {
+                    document.getElementById('loading').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loading').style.display = 'none';
+                    }, 1000);
+                }, 2000);
+            }
+
+            createParticles() {
+                const particlesContainer = document.getElementById('particles');
+                for (let i = 0; i < 50; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.top = Math.random() * 100 + '%';
+                    particle.style.width = Math.random() * 4 + 2 + 'px';
+                    particle.style.height = particle.style.width;
+                    particle.style.animationDelay = Math.random() * 6 + 's';
+                    particle.style.animationDuration = Math.random() * 4 + 4 + 's';
+                    particlesContainer.appendChild(particle);
+                }
+            }
+
+            initThreeJS() {
+                const container = document.getElementById('threejs-container');
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ alpha: true });
+                
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                container.appendChild(renderer.domElement);
+
+                // Create floating geometric shapes
+                const geometries = [
+                    new THREE.BoxGeometry(1, 1, 1),
+                    new THREE.SphereGeometry(0.5, 32, 32),
+                    new THREE.ConeGeometry(0.5, 1, 32)
+                ];
+
+                const materials = [
+                    new THREE.MeshBasicMaterial({ color: 0x667eea, transparent: true, opacity: 0.1 }),
+                    new THREE.MeshBasicMaterial({ color: 0xf093fb, transparent: true, opacity: 0.1 }),
+                    new THREE.MeshBasicMaterial({ color: 0x4facfe, transparent: true, opacity: 0.1 })
+                ];
+
+                const meshes = [];
+                for (let i = 0; i < 20; i++) {
+                    const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+                    const material = materials[Math.floor(Math.random() * materials.length)];
+                    const mesh = new THREE.Mesh(geometry, material);
+                    
+                    mesh.position.x = (Math.random() - 0.5) * 50;
+                    mesh.position.y = (Math.random() - 0.5) * 50;
+                    mesh.position.z = (Math.random() - 0.5) * 50;
+                    
+                    mesh.userData = {
+                        rotationSpeed: Math.random() * 0.02 + 0.005,
+                        floatSpeed: Math.random() * 0.01 + 0.005
+                    };
+                    
+                    scene.add(mesh);
+                    meshes.push(mesh);
+                }
+
+                camera.position.z = 30;
+
+                // Animation loop
+                function animate() {
+                    requestAnimationFrame(animate);
+                    
+                    meshes.forEach(mesh => {
+                        mesh.rotation.x += mesh.userData.rotationSpeed;
+                        mesh.rotation.y += mesh.userData.rotationSpeed;
+                        mesh.position.y += Math.sin(Date.now() * mesh.userData.floatSpeed) * 0.01;
+                    });
+                    
+                    renderer.render(scene, camera);
+                }
+                animate();
+
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            }
+
+            bindEvents() {
+                // Form submission
+                document.getElementById('birthdayForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addBirthday();
+                });
+
+                // Search
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.searchTerm = e.target.value.toLowerCase();
+                    this.renderBirthdays();
+                });
+
+                // Filter buttons
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentFilter = e.target.dataset.filter;
+                        this.renderBirthdays();
+                    });
+                });
+            }
+
+            addBirthday() {
+                const name = document.getElementById('personName').value.trim();
+                const date = document.getElementById('birthDate').value;
+                const email = document.getElementById('personEmail').value.trim();
+                const relationship = document.getElementById('relationship').value;
+                const notes = document.getElementById('notes').value.trim();
+
+                if (!name || !date) return;
+
+                const birthday = {
+                    id: Date.now(),
+                    name,
+                    date,
+                    email,
+                    relationship,
+                    notes,
+                    createdAt: new Date().toISOString()
+                };
+
+                this.birthdays.push(birthday);
+                this.saveBirthdays();
+                this.renderBirthdays();
+                this.updateStats();
+                
+                // Reset form
+                document.getElementById('birthdayForm').reset();
+                
+                // Success animation
+                this.showSuccessAnimation();
+            }
+
+            deleteBirthday(id) {
+                if (confirm('Are you sure you want to delete this birthday?')) {
+                    this.birthdays = this.birthdays.filter(b => b.id !== id);
+                    this.saveBirthdays();
+                    this.renderBirthdays();
+                    this.updateStats();
+                    this.showDeleteAnimation();
+                }
+            }
+
+            renderBirthdays() {
+                const container = document.getElementById('birthdayList');
+                const emptyState = document.getElementById('emptyState');
+                let filteredBirthdays = this.getFilteredBirthdays();
+
+                if (filteredBirthdays.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                
+                // Sort by next birthday
+                filteredBirthdays.sort((a, b) => {
+                    const aNext = this.getNextBirthdayDate(a.date);
+                    const bNext = this.getNextBirthdayDate(b.date);
+                    return aNext - bNext;
+                });
+
+                container.innerHTML = filteredBirthdays.map(birthday => this.createBirthdayCard(birthday)).join('');
+            }
+
+            createBirthdayCard(birthday) {
+                const today = new Date();
+                const birthDate = new Date(birthday.date);
+                const nextBirthday = this.getNextBirthdayDate(birthday.date);
+                const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                const age = this.calculateAge(birthday.date);
+                
+                let cardClass = 'birthday-card';
+                let countdownText = '';
+                let statusIcon = '';
+
+                if (daysUntil === 0) {
+                    cardClass += ' today';
+                    countdownText = `🎉 Today! (${age} years old)`;
+                    statusIcon = '<i class="fas fa-birthday-cake text-warning"></i>';
+                } else if (daysUntil <= 7) {
+                    cardClass += ' upcoming';
+                    countdownText = `${daysUntil} day${daysUntil === 1 ? '' : 's'} to go (turning ${age})`;
+                    statusIcon = '<i class="fas fa-clock text-info"></i>';
+                } else {
+                    countdownText = `${daysUntil} days to go (turning ${age})`;
+                    statusIcon = '<i class="fas fa-calendar text-light"></i>';
+                }
+
+                return `
+                    <div class="${cardClass}" data-id="${birthday.id}">
+                        <button class="delete-btn" onclick="app.deleteBirthday(${birthday.id})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="card-name">
+                            ${statusIcon} ${birthday.name}
+                            ${birthday.relationship ? `<span class="badge bg-secondary ms-2">${birthday.relationship}</span>` : ''}
+                        </div>
+                        <div class="card-date">
+                            <i class="fas fa-calendar-day"></i> ${this.formatDate(birthday.date)}
+                        </div>
+                        <div class="card-countdown">
+                            ${countdownText}
+                        </div>
+                        ${birthday.email ? `<div class="card-email"><i class="fas fa-envelope"></i> ${birthday.email}</div>` : ''}
+                        ${birthday.notes ? `<div class="card-notes"><i class="fas fa-sticky-note"></i> ${birthday.notes}</div>` : ''}
+                    </div>
+                `;
+            }
+
+            getFilteredBirthdays() {
+                let filtered = this.birthdays;
+
+                // Apply search filter
+                if (this.searchTerm) {
+                    filtered = filtered.filter(b => 
+                        b.name.toLowerCase().includes(this.searchTerm) ||
+                        (b.relationship && b.relationship.toLowerCase().includes(this.searchTerm)) ||
+                        (b.notes && b.notes.toLowerCase().includes(this.searchTerm))
+                    );
+                }
+
+                // Apply category filter
+                if (this.currentFilter !== 'all') {
+                    const today = new Date();
+                    filtered = filtered.filter(b => {
+                        const nextBirthday = this.getNextBirthdayDate(b.date);
+                        const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+
+                        switch (this.currentFilter) {
+                            case 'today':
+                                return daysUntil === 0;
+                            case 'upcoming':
+                                return daysUntil > 0 && daysUntil <= 7;
+                            case 'month':
+                                return daysUntil <= 30;
+                            default:
+                                return true;
+                        }
+                    });
+                }
+
+                return filtered;
+            }
+
+            updateStats() {
+                const today = new Date();
+                const todayBirthdays = this.birthdays.filter(b => {
+                    const nextBirthday = this.getNextBirthdayDate(b.date);
+                    const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                    return daysUntil === 0;
+                }).length;
+
+                const upcomingBirthdays = this.birthdays.filter(b => {
+                    const nextBirthday = this.getNextBirthdayDate(b.date);
+                    const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                    return daysUntil > 0 && daysUntil <= 7;
+                }).length;
+
+                const thisMonthBirthdays = this.birthdays.filter(b => {
+                    const nextBirthday = this.getNextBirthdayDate(b.date);
+                    const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                    return daysUntil <= 30;
+                }).length;
+
+                // Animate counter updates
+                this.animateCounter('totalBirthdays', this.birthdays.length);
+                this.animateCounter('todayBirthdays', todayBirthdays);
+                this.animateCounter('upcomingBirthdays', upcomingBirthdays);
+                this.animateCounter('thisMonthBirthdays', thisMonthBirthdays);
+            }
+
+            animateCounter(elementId, targetValue) {
+                const element = document.getElementById(elementId);
+                const currentValue = parseInt(element.textContent) || 0;
+                const increment = targetValue > currentValue ? 1 : -1;
+                const duration = 1000;
+                const steps = Math.abs(targetValue - currentValue);
+                const stepDuration = steps > 0 ? duration / steps : 0;
+
+                if (steps === 0) return;
+
+                let current = currentValue;
+                const timer = setInterval(() => {
+                    current += increment;
+                    element.textContent = current;
+                    
+                    if (current === targetValue) {
+                        clearInterval(timer);
+                    }
+                }, stepDuration);
+            }
+
+            checkTodayBirthdays() {
+                const today = new Date();
+                const todayBirthdays = this.birthdays.filter(b => {
+                    const nextBirthday = this.getNextBirthdayDate(b.date);
+                    const daysUntil = Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+                    return daysUntil === 0;
+                });
+
+                if (todayBirthdays.length > 0) {
+                    this.showBirthdayAlert(todayBirthdays);
+                    this.createConfetti();
+                }
+            }
+
+            showBirthdayAlert(birthdays) {
+                const names = birthdays.map(b => b.name).join(', ');
+                const message = birthdays.length === 1 
+                    ? `🎉 It's ${names}'s birthday today!` 
+                    : `🎉 Today is the birthday of: ${names}!`;
+
+                // Create custom alert
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success position-fixed top-0 start-50 translate-middle-x mt-3';
+                alert.style.zIndex = '10000';
+                alert.style.minWidth = '300px';
+                alert.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-birthday-cake me-2"></i>
+                        <div>${message}</div>
+                        <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+                    </div>
+                `;
+                
+                document.body.appendChild(alert);
+                
+                // Auto remove after 10 seconds
+                setTimeout(() => {
+                    if (alert.parentElement) {
+                        alert.remove();
+                    }
+                }, 10000);
+            }
+
+            createConfetti() {
+                const confettiContainer = document.getElementById('confetti');
+                const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe'];
+                
+                for (let i = 0; i < 100; i++) {
+                    const confettiPiece = document.createElement('div');
+                    confettiPiece.className = 'confetti-piece';
+                    confettiPiece.style.left = Math.random() * 100 + '%';
+                    confettiPiece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confettiPiece.style.animationDelay = Math.random() * 3 + 's';
+                    confettiPiece.style.animationDuration = Math.random() * 3 + 2 + 's';
+                    
+                    confettiContainer.appendChild(confettiPiece);
+                    
+                    setTimeout(() => {
+                        confettiPiece.remove();
+                    }, 5000);
+                }
+            }
+
+            showSuccessAnimation() {
+                const btn = document.querySelector('.btn-custom');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Added!';
+                btn.style.background = 'linear-gradient(135deg, #10ac84, #00d2d3)';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                }, 2000);
+            }
+
+            showDeleteAnimation() {
+                // Create a temporary success message
+                const message = document.createElement('div');
+                message.className = 'alert alert-info position-fixed top-0 end-0 m-3';
+                message.style.zIndex = '10000';
+                message.innerHTML = '<i class="fas fa-trash"></i> Birthday deleted successfully!';
+                
+                document.body.appendChild(message);
+                
+                setTimeout(() => {
+                    message.remove();
+                }, 3000);
+            }
+
+            getNextBirthdayDate(birthDateString) {
+                const today = new Date();
+                const birthDate = new Date(birthDateString);
+                const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+                
+                if (nextBirthday < today) {
+                    nextBirthday.setFullYear(today.getFullYear() + 1);
+                }
+                
+                return nextBirthday;
+            }
+
+            calculateAge(birthDateString) {
+                const today = new Date();
+                const birthDate = new Date(birthDateString);
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                
+                return age + 1; // Next birthday age
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+
+            saveBirthdays() {
+                // Since we can't use localStorage, we'll keep data in memory
+                // In a real application, this would save to localStorage:
+                // localStorage.setItem('birthdays', JSON.stringify(this.birthdays));
+            }
+
+            loadBirthdays() {
+                // Since we can't use localStorage, we'll return demo data
+                // In a real application, this would load from localStorage:
+                // return JSON.parse(localStorage.getItem('birthdays') || '[]');
+                
+                // Demo data for showcasing the app
+                return [
+                    {
+                        id: 1,
+                        name: 'Alice Johnson',
+                        date: '1990-07-15',
+                        email: 'alice@example.com',
+                        relationship: 'Friend',
+                        notes: 'Loves chocolate cake!',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 2,
+                        name: 'Bob Smith',
+                        date: '1985-12-03',
+                        email: 'bob@example.com',
+                        relationship: 'Colleague',
+                        notes: 'Remember to get a funny card',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 3,
+                        name: 'Carol Davis',
+                        date: new Date().toISOString().split('T')[0], // Today's date for demo
+                        email: 'carol@example.com',
+                        relationship: 'Family',
+                        notes: 'Sister - planning surprise party!',
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+            }
+
+            // Export functionality
+            exportBirthdays() {
+                const dataStr = JSON.stringify(this.birthdays, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'birthdays.json';
+                link.click();
+                
+                URL.revokeObjectURL(url);
+            }
+
+            // Import functionality
+            importBirthdays(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedBirthdays = JSON.parse(e.target.result);
+                        this.birthdays = [...this.birthdays, ...importedBirthdays];
+                        this.saveBirthdays();
+                        this.renderBirthdays();
+                        this.updateStats();
+                        alert('Birthdays imported successfully!');
+                    } catch (error) {
+                        alert('Error importing birthdays. Please check the file format.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Initialize the app
+        let app;
+        document.addEventListener('DOMContentLoaded', () => {
+            app = new BirthdayApp();
+        });
+
+        // Additional interactive features
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add hover effects to cards
+            document.addEventListener('mouseover', (e) => {
+                if (e.target.closest('.birthday-card')) {
+                    const card = e.target.closest('.birthday-card');
+                    gsap.to(card, {duration: 0.3, scale: 1.02, rotationY: 2});
+                }
+            });
+
+            document.addEventListener('mouseout', (e) => {
+                if (e.target.closest('.birthday-card')) {
+                    const card = e.target.closest('.birthday-card');
+                    gsap.to(card, {duration: 0.3, scale: 1, rotationY: 0});
+                }
+            });
+
+            // Add floating animation to form inputs
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.addEventListener('focus', () => {
+                    gsap.to(input, {duration: 0.3, scale: 1.02, boxShadow: '0 0 25px rgba(255,255,255,0.3)'});
+                });
+
+                input.addEventListener('blur', () => {
+                    gsap.to(input, {duration: 0.3, scale: 1, boxShadow: 'none'});
+                });
+            });
+
+            // Add export/import buttons dynamically
+            const headerActions = document.createElement('div');
+            headerActions.className = 'text-center mt-3';
+            headerActions.innerHTML = `
+                <button class="btn btn-outline-light me-2" onclick="app.exportBirthdays()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" 
+                       onchange="app.importBirthdays(this.files[0])">
+                <button class="btn btn-outline-light" onclick="document.getElementById('importFile').click()">
+                    <i class="fas fa-upload"></i> Import
+                </button>
+            `;
+            document.querySelector('.header').appendChild(headerActions);
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'n':
+                            e.preventDefault();
+                            document.getElementById('personName').focus();
+                            break;
+                        case 'f':
+                            e.preventDefault();
+                            document.getElementById('searchInput').focus();
+                            break;
+                        case 'e':
+                            e.preventDefault();
+                            app.exportBirthdays();
+                            break;
+                    }
+                }
+            });
+
+            // Add notification permission request
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+
+            // Check for birthdays every hour
+            setInterval(() => {
+                app.checkTodayBirthdays();
+            }, 3600000);
+        });
+
+        // Service Worker for offline functionality (if needed)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {
+                // Service worker registration failed, but app still works
+            });
+        }
+    </script>
+</body>
+</html>
