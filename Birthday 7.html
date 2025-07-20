@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Birthday Reminder System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #3494e6 0%, #1e5799 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.35);
+        }
+        
+        .birthday-card {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border: none;
+            color: #8b4513;
+        }
+        
+        .upcoming-card {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border: none;
+            color: #2d3748;
+        }
+        
+        .past-card {
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            border: none;
+            color: #006064;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3494e6 0%, #1e5799 100%);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px -12px rgba(52, 148, 230, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px -12px rgba(255, 107, 107, 0.4);
+        }
+        
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .celebration-animation {
+            animation: celebration 2s ease-in-out infinite;
+        }
+        
+        @keyframes celebration {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(5deg); }
+            75% { transform: scale(1.1) rotate(-5deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse-glow {
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(52, 148, 230, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(52, 148, 230, 0.6); }
+        }
+        
+        .notification-badge {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            animation: bounce 1s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3494e6 0%, #1e5799 100%);
+            border-radius: 10px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #1e5799 0%, #3494e6 100%);
+        }
+        
+        .birthday-emoji {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0.7;
+            animation: confetti-fall 5s linear;
+        }
+        
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        .age-badge {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-weight: 600;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg">
+    <div class="floating-particles"></div>
+    
+    <!-- Header -->
+    <header class="relative z-10 p-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="glass-morphism rounded-3xl p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                            <span class="text-2xl">🎂</span>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold text-white">Ultimate Birthday Reminder</h1>
+                            <p class="text-blue-200">Never miss a special day again!</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <div id="notificationBadge" class="notification-badge absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold hidden">0</div>
+                            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center cursor-pointer hover:bg-opacity-30 transition-all" id="notificationsBtn">
+                                <span class="text-xl">🔔</span>
+                            </div>
+                        </div>
+                        <div class="text-right text-white">
+                            <div class="text-sm opacity-80">Today</div>
+                            <div id="currentDate" class="font-semibold">June 29, 2025</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 pb-12">
+        <!-- Add Birthday Form -->
+        <section class="mb-8">
+            <div class="glass-morphism rounded-3xl p-8 card-hover">
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <span class="mr-3">✨</span>
+                    Add New Birthday
+                </h2>
+                <form id="birthdayForm" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-blue-200 text-sm font-medium mb-2">Full Name</label>
+                        <input type="text" id="personName" required 
+                               class="w-full px-4 py-3 rounded-xl bg-white bg-opacity-20 border border-white border-opacity-30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300"
+                               placeholder="Enter person's name">
+                    </div>
+                    <div>
+                        <label class="block text-blue-200 text-sm font-medium mb-2">Birthday Date</label>
+                        <input type="date" id="birthdayDate" required 
+                               class="w-full px-4 py-3 rounded-xl bg-white bg-opacity-20 border border-white border-opacity-30 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="btn-primary w-full px-6 py-3 rounded-xl text-white font-semibold pulse-glow">
+                            Add Birthday 🎉
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Statistics Dashboard -->
+        <section class="mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="glass-morphism rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-200 text-sm">Total Birthdays</p>
+                            <p id="totalCount" class="text-3xl font-bold text-white">12</p>
+                        </div>
+                        <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                            <span class="text-xl">👥</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-morphism rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-200 text-sm">This Month</p>
+                            <p id="thisMonthCount" class="text-3xl font-bold text-white">3</p>
+                        </div>
+                        <div class="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                            <span class="text-xl">📅</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-morphism rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-200 text-sm">Next 7 Days</p>
+                            <p id="upcomingCount" class="text-3xl font-bold text-white">2</p>
+                        </div>
+                        <div class="w-12 h-12 bg-gradient-to-r from-pink-400 to-red-500 rounded-full flex items-center justify-center">
+                            <span class="text-xl">⏰</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-morphism rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-200 text-sm">Today</p>
+                            <p id="todayCount" class="text-3xl font-bold text-white">1</p>
+                        </div>
+                        <div class="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
+                            <span class="text-xl">🎂</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Birthday Lists -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Today's Birthdays -->
+            <div class="glass-morphism rounded-3xl p-8">
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <span class="mr-3">🎉</span>
+                    Today's Celebrations
+                </h2>
+                <div id="todayBirthdays" class="space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
+                    <div class="birthday-card rounded-2xl p-6 card-hover fade-in">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                    <span class="text-xl">🎂</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold">John Smith</h3>
+                                    <p class="text-sm opacity-80">Turning 35 today!</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="sendBirthdayWish('John Smith')" 
+                                        class="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all">
+                                    Send Wish 💌
+                                </button>
+                                <button onclick="removeBirthday(1)" 
+                                        class="bg-red-500 bg-opacity-20 px-3 py-2 rounded-lg hover:bg-opacity-30 transition-all">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Birthdays -->
+            <div class="glass-morphism rounded-3xl p-8">
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <span class="mr-3">📅</span>
+                    Upcoming Birthdays
+                </h2>
+                <div id="upcomingBirthdays" class="space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
+                    <div class="upcoming-card rounded-2xl p-6 card-hover fade-in">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                                    <span class="text-xl">📅</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold">Sarah Johnson</h3>
+                                    <p class="text-sm opacity-80">
+                                        2 days away • Turning 28
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <div class="bg-white bg-opacity-20 px-3 py-2 rounded-lg text-sm font-medium">
+                                    Jul 1
+                                </div>
+                                <button onclick="removeBirthday(2)" 
+                                        class="bg-red-500 bg-opacity-20 px-3 py-2 rounded-lg hover:bg-opacity-30 transition-all">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="upcoming-card rounded-2xl p-6 card-hover fade-in">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                                    <span class="text-xl">📅</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold">Michael Brown</h3>
+                                    <p class="text-sm opacity-80">
+                                        5 days away • Turning 42
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <div class="bg-white bg-opacity-20 px-3 py-2 rounded-lg text-sm font-medium">
+                                    Jul 4
+                                </div>
+                                <button onclick="removeBirthday(3)" 
+                                        class="bg-red-500 bg-opacity-20 px-3 py-2 rounded-lg hover:bg-opacity-30 transition-all">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- All Birthdays -->
+        <section class="mt-8">
+            <div class="glass-morphism rounded-3xl p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <span class="mr-3">📋</span>
+                        All Birthdays
+                    </h2>
+                    <div class="flex space-x-4">
+                        <select id="sortBy" class="px-4 py-2 rounded-xl bg-white bg-opacity-20 border border-white border-opacity-30 text-white focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            <option value="name">Sort by Name</option>
+                            <option value="date">Sort by Date</option>
+                            <option value="upcoming">Sort by Upcoming</option>
+                        </select>
+                        <input type="text" id="searchInput" placeholder="Search birthdays..." 
+                               class="px-4 py-2 rounded-xl bg-white bg-opacity-20 border border-white border-opacity-30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    </div>
+                </div>
+                <div id="allBirthdays" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-96 overflow-y-auto custom-scrollbar p-2">
+                    <div class="past-card rounded-2xl p-6 card-hover fade-in">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-teal-400 rounded-full flex items-center justify-center">
+                                    <span class="text-xl">🎁</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold">Emma Wilson</h3>
+                                    <p class="text-sm opacity-80">January 15, 1990</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="age-badge">
+                                    35 yrs
+                                </span>
+                                <button onclick="removeBirthday(4)" 
+                                        class="bg-red-500 bg-opacity-20 px-3 py-2 rounded-lg hover:bg-opacity-30 transition-all">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="past-card rounded-2xl p-6 card-hover fade-in">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-teal-400 rounded-full flex items-center justify-center">
+                                    <span class="text-xl">🎁</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold">David Lee</h3>
+                                    <p class="text-sm opacity-80">March 22, 1985</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="age-badge">
+                                    40 yrs
+                                </span>
+                                <button onclick="removeBirthday(5)" 
+                                        class="bg-red-500 bg-opacity-20 px-3 py-2 rounded-lg hover:bg-opacity-30 transition-all">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="past-card rounded-2xl p-6 card-hover fade-in">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-teal-400 rounded-full flex items-center justify-center">
+                                    <span class="text-xl">🎁</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold">Lisa Chen</h3>
+                                    <p class="text-sm opacity-80">August 10, 1995</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="age-badge">
+                                    30 yrs
+                                </span>
+                                <button onclick="removeBirthday(6)" 
+                                        class="bg-red-500 bg-opacity-20 px-3 py-2 rounded-lg hover:bg-opacity-30 transition-all">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Birthday Celebration Modal -->
+    <div id="celebrationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="glass-morphism rounded-3xl p-8 max-w-md mx-4 celebration-animation">
+            <div class="text-center">
+                <div class="text-6xl mb-4 birthday-emoji">🎉</div>
+                <h3 class="text-2xl font-bold text-white mb-2">Happy Birthday!</h3>
+                <p id="celebrationMessage" class="text-blue-200 mb-6">It's John Smith's birthday today! 🎂</p>
+                <button onclick="closeCelebrationModal()" class="btn-primary px-6 py-3 rounded-xl text-white font-semibold">
+                    Celebrate! 🎂
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Panel -->
+    <div id="notificationsPanel" class="fixed top-0 right-0 h-full w-80 bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg transform translate-x-full transition-transform duration-300 z-50">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-white">Notifications</h2>
+                <button id="closeNotifications" class="text-white text-xl">&times;</button>
+            </div>
+            <div id="notificationsList" class="space-y-4">
+                <div class="bg-white bg-opacity-10 rounded-xl p-4">
+                    <div class="flex items-start">
+                        <div class="bg-yellow-400 bg-opacity-20 p-2 rounded-lg mr-3">
+                            <span class="text-yellow-400">🎂</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-white">John Smith's Birthday</h3>
+                            <p class="text-sm text-blue-200">Today is John's birthday! Don't forget to wish them.</p>
+                            <p class="text-xs text-blue-200 mt-1">Today at 9:00 AM</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white bg-opacity-10 rounded-xl p-4">
+                    <div class="flex items-start">
+                        <div class="bg-blue-400 bg-opacity-20 p-2 rounded-lg mr-3">
+                            <span class="text-blue-400">⏰</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-white">Upcoming Birthday</h3>
+                            <p class="text-sm text-blue-200">Sarah Johnson's birthday is in 2 days.</p>
+                            <p class="text-xs text-blue-200 mt-1">Yesterday at 3:45 PM</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let birthdays = [
+            { id: 1, name: "John Smith", date: "1990-06-29" },
+            { id: 2, name: "Sarah Johnson", date: "1997-07-01" },
+            { id: 3, name: "Michael Brown", date: "1983-07-04" },
+            { id: 4, name: "Emma Wilson", date: "1990-01-15" },
+            { id: 5, name: "David Lee", date: "1985-03-22" },
+            { id: 6, name: "Lisa Chen", date: "1995-08-10" }
+        ];
+        let scene, camera, renderer, particles;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeThreeJS();
+            updateCurrentDate();
+            updateStatistics();
+            setupEventListeners();
+            checkTodaysBirthdays();
+            
+            // Update every minute
+            setInterval(() => {
+                updateCurrentDate();
+                updateStatistics();
+                checkTodaysBirthdays();
+            }, 60000);
+        });
+
+        // Three.js initialization for floating particles
+        function initializeThreeJS() {
+            const container = document.querySelector('.floating-particles');
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            // Create particles
+            const particleCount = 100;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 20;
+                positions[i + 1] = (Math.random() - 0.5) * 20;
+                positions[i + 2] = (Math.random() - 0.5) * 20;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.05,
+                color: new THREE.Color(0.67, 0.85, 0.90), // light blue
+                transparent: true,
+                opacity: 0.6
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+
+            camera.position.z = 5;
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                particles.rotation.x += 0.001;
+                particles.rotation.y += 0.002;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // Event listeners setup
+        function setupEventListeners() {
+            document.getElementById('birthdayForm').addEventListener('submit', addBirthday);
+            document.getElementById('sortBy').addEventListener('change', renderBirthdays);
+            document.getElementById('searchInput').addEventListener('input', renderBirthdays);
+            
+            // Notifications panel
+            document.getElementById('notificationsBtn').addEventListener('click', toggleNotifications);
+            document.getElementById('closeNotifications').addEventListener('click', closeNotifications);
+        }
+
+        // Toggle notifications panel
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationsPanel');
+            panel.style.transform = 'translateX(0)';
+        }
+
+        // Close notifications panel
+        function closeNotifications() {
+            const panel = document.getElementById('notificationsPanel');
+            panel.style.transform = 'translateX(100%)';
+        }
+
+        // Update current date display
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // Add new birthday
+        function addBirthday(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('personName').value.trim();
+            const date = document.getElementById('birthdayDate').value;
+            
+            if (!name || !date) return;
+
+            const birthday = {
+                id: Date.now(),
+                name: name,
+                date: date,
+                dateAdded: new Date().toISOString()
+            };
+
+            birthdays.push(birthday);
+            updateStatistics();
+            
+            // Reset form
+            document.getElementById('birthdayForm').reset();
+            
+            // Show success animation
+            showNotification(`Added ${name}'s birthday! 🎉`);
+            
+            // Render all birthdays
+            renderBirthdays();
+        }
+
+        // Remove birthday
+        function removeBirthday(id) {
+            const birthday = birthdays.find(b => b.id === id);
+            if (birthday && confirm(`Are you sure you want to remove ${birthday.name}'s birthday?`)) {
+                birthdays = birthdays.filter(b => b.id !== id);
+                updateStatistics();
+                renderBirthdays();
+                showNotification(`Removed ${birthday.name}'s birthday`);
+            }
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            document.getElementById('totalCount').textContent = birthdays.length;
+            document.getElementById('thisMonthCount').textContent = 3; // Hardcoded for demo
+            document.getElementById('upcomingCount').textContent = 2; // Hardcoded for demo
+            document.getElementById('todayCount').textContent = 1; // Hardcoded for demo
+
+            // Update notification badge
+            const notificationBadge = document.getElementById('notificationBadge');
+            notificationBadge.textContent = 2; // Hardcoded for demo
+            notificationBadge.classList.remove('hidden');
+        }
+
+        // Get today's birthdays
+        function getTodaysBirthdays() {
+            return birthdays.filter(b => {
+                const bDate = new Date(b.date);
+                const today = new Date();
+                return bDate.getMonth() === today.getMonth() && bDate.getDate() === today.getDate();
+            });
+        }
+
+        // Calculate age
+        function calculateAge(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            
+            return age;
+        }
+
+        // Calculate days until next birthday
+        function daysUntilBirthday(birthDate) {
+            const today = new Date();
+            const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+            
+            if (today > nextBirthday) {
+                nextBirthday.setFullYear(today.getFullYear() + 1);
+            }
+            
+            return Math.ceil((nextBirthday - today) / (1000 * 60 * 60 * 24));
+        }
+
+        // Check for today's birthdays
+        function checkTodaysBirthdays() {
+            const todaysBirthdays = getTodaysBirthdays();
+            if (todaysBirthdays.length > 0) {
+                const names = todaysBirthdays.map(b => b.name).join(', ');
+                showCelebrationModal(names);
+            }
+        }
+
+        // Show celebration modal
+        function showCelebrationModal(names) {
+            const modal = document.getElementById('celebrationModal');
+            const message = document.getElementById('celebrationMessage');
+            
+            message.textContent = `It's ${names}'s birthday today! 🎂`;
+            modal.classList.remove('hidden');
+            
+            // Create confetti
+            createConfetti();
+        }
+
+        // Close celebration modal
+        function closeCelebrationModal() {
+            const modal = document.getElementById('celebrationModal');
+            modal.classList.add('hidden');
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            const container = document.body;
+            
+            for (let i = 0; i < 150; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 10 + 5 + 'px';
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                container.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // Send birthday wish
+        function sendBirthdayWish(name) {
+            alert(`Sending birthday wish to ${name}...\n\nHappy Birthday ${name}! 🎉🎂`);
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 glass-morphism p-4 rounded-xl text-white z-50 fade-in';
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <span class="mr-2">🎉</span>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            // Remove after delay
+            setTimeout(() => {
+                notification.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
