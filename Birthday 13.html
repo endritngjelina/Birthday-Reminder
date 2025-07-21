@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Reminder - Never Miss a Celebration</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --warning-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            --danger-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            
+            --bg-primary: #0f0f23;
+            --bg-secondary: #1a1a2e;
+            --bg-tertiary: #16213e;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #b8b8d4;
+            --text-muted: #6c6c8a;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --bg-card: rgba(255, 255, 255, 0.8);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--primary-gradient);
+            opacity: 0.1;
+            border-radius: 0 0 50px 50px;
+            z-index: -1;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.3)); }
+            100% { filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6)); }
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow);
+        }
+
+        .theme-toggle i {
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+
+        .input-section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .input-section:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 20px;
+            align-items: end;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255, 154, 158, 0.4);
+        }
+
+        .birthday-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .birthday-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .birthday-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .birthday-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .birthday-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .birthday-card.today {
+            border: 2px solid #f5576c;
+            background: linear-gradient(135deg, rgba(245, 87, 108, 0.1), rgba(240, 147, 251, 0.1));
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 87, 108, 0.4); }
+            50% { box-shadow: 0 0 0 20px rgba(245, 87, 108, 0); }
+        }
+
+        .birthday-card.upcoming {
+            border: 2px solid #38ef7d;
+            background: linear-gradient(135deg, rgba(56, 239, 125, 0.1), rgba(17, 153, 142, 0.1));
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .birthday-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .birthday-date {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .days-until {
+            font-size: 0.9rem;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .days-until.today {
+            background: var(--secondary-gradient);
+            color: white;
+            animation: rainbow 3s linear infinite;
+        }
+
+        @keyframes rainbow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .days-until.upcoming {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .days-until.future {
+            background: var(--accent-gradient);
+            color: white;
+        }
+
+        .age-display {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 20px 0;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-muted);
+        }
+
+        .delete-btn:hover {
+            background: var(--danger-gradient);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .stats-section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 30px;
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .search-section {
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: 2px solid transparent;
+            border-radius: 50px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .notification.success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .notification.error {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .sort-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .sort-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sort-btn.active {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        .sort-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .birthday-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f093fb;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="background-animation" id="backgroundAnimation"></div>
+    <div class="floating-particles" id="floatingParticles"></div>
+    
+    <div class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-moon" id="themeIcon"></i>
+        <span id="themeText">Dark Mode</span>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-birthday-cake"></i> Birthday Reminder</h1>
+            <p>Never miss another special celebration again</p>
+        </header>
+
+        <section class="input-section">
+            <div class="input-group">
+                <div class="form-group">
+                    <label for="personName">Person's Name</label>
+                    <input type="text" id="personName" class="form-control" placeholder="Enter name..." required>
+                </div>
+                <div class="form-group">
+                    <label for="birthDate">Birth Date</label>
+                    <input type="date" id="birthDate" class="form-control" required>
+                </div>
+                <button class="btn btn-primary" onclick="addBirthday()">
+                    <i class="fas fa-plus"></i> Add Birthday
+                </button>
+            </div>
+        </section>
+
+        <section class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search birthdays..." oninput="filterBirthdays()">
+                <i class="fas fa-search"></i>
+            </div>
+        </section>
+
+        <section class="sort-controls">
+            <button class="sort-btn active" onclick="sortBirthdays('upcoming')">Upcoming</button>
+            <button class="sort-btn" onclick="sortBirthdays('name')">Name A-Z</button>
+            <button class="sort-btn" onclick="sortBirthdays('age')">Age</button>
+            <button class="sort-btn" onclick="sortBirthdays('month')">Month</button>
+        </section>
+
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalBirthdays">0</div>
+                    <div class="stat-label">Total Birthdays</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="upcomingCount">0</div>
+                    <div class="stat-label">This Month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="todayCount">0</div>
+                    <div class="stat-label">Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="averageAge">0</div>
+                    <div class="stat-label">Average Age</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="birthday-grid" id="birthdayGrid">
+            <div class="empty-state">
+                <i class="fas fa-calendar-plus"></i>
+                <h3>No birthdays added yet</h3>
+                <p>Add your first birthday to get started!</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Birthday storage and management
+        let birthdays = JSON.parse(localStorage.getItem('birthdays')) || [];
+        let currentSort = 'upcoming';
+        let filteredBirthdays = [...birthdays];
+
+        // Three.js background animation
+        let scene, camera, renderer, particles;
+
+        function initBackground() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            document.getElementById('backgroundAnimation').appendChild(renderer.domElement);
+
+            // Create particle system
+            const particleCount = 100;
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 100;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+
+                colors[i * 3] = Math.random();
+                colors[i * 3 + 1] = Math.random();
+                colors[i * 3 + 2] = Math.random();
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 2,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+
+            camera.position.z = 50;
+            animateBackground();
+        }
+
+        function animateBackground() {
+            requestAnimationFrame(animateBackground);
+            
+            if (particles) {
+                particles.rotation.x += 0.001;
+                particles.rotation.y += 0.002;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            
+            if (body.dataset.theme === 'dark') {
+                body.dataset.theme = 'light';
+                themeIcon.className = 'fas fa-sun';
+                themeText.textContent = 'Light Mode';
+            } else {
+                body.dataset.theme = 'dark';
+                themeIcon.className = 'fas fa-moon';
+                themeText.textContent = 'Dark Mode';
+            }
+            
+            localStorage.setItem('theme', body.dataset.theme);
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.body.dataset.theme = savedTheme;
+            
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            
+            if (savedTheme === 'light') {
+                themeIcon.className = 'fas fa-sun';
+                themeText.textContent = 'Light Mode';
+            }
+        }
+
+        // Add birthday
+        function addBirthday() {
+            const name = document.getElementById('personName').value.trim();
+            const birthDate = document.getElementById('birthDate').value;
+            
+            if (!name || !birthDate) {
+                showNotification('Please fill in both name and birth date!', 'error');
+                return;
+            }
+            
+            if (birthdays.some(b => b.name.toLowerCase() === name.toLowerCase())) {
+                showNotification('Person already exists!', 'error');
+                return;
+            }
+            
+            const birthday = {
+                id: Date.now(),
+                name: name,
+                birthDate: birthDate,
+                addedDate: new Date().toISOString()
+            };
+            
+            birthdays.push(birthday);
+            saveBirthdays();
+            
+            document.getElementById('personName').value = '';
+            document.getElementById('birthDate').value = '';
+            
+            showNotification(`${name}'s birthday has been added!`, 'success');
+            
+            if (isBirthdayToday(birthDate)) {
+                createConfetti();
+            }
+            
+            filterAndRenderBirthdays();
+            updateStats();
+        }
+
+        // Remove birthday
+        function removeBirthday(id) {
+            const birthday = birthdays.find(b => b.id === id);
+            if (birthday) {
+                birthdays = birthdays.filter(b => b.id !== id);
+                saveBirthdays();
+                showNotification(`${birthday.name}'s birthday has been removed!`, 'success');
+                filterAndRenderBirthdays();
+                updateStats();
+            }
+        }
+
+        // Save birthdays to localStorage
+        function saveBirthdays() {
+            localStorage.setItem('birthdays', JSON.stringify(birthdays));
+        }
+
+        // Calculate age
+        function calculateAge(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            
+            return age;
+        }
+
+        // Calculate days until birthday
+        function daysUntilBirthday(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            const thisYear = today.getFullYear();
+            
+            birth.setFullYear(thisYear);
+            
+            if (birth < today) {
+                birth.setFullYear(thisYear + 1);
+            }
+            
+            const diffTime = birth - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            return diffDays;
+        }
+
+        // Check if birthday is today
+        function isBirthdayToday(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            return today.getMonth() === birth.getMonth() && today.getDate() === birth.getDate();
+        }
+
+        // Check if birthday is this month
+        function isBirthdayThisMonth(birthDate) {
+            const today = new Date();
+            const birth = new Date(birthDate);
+            return today.getMonth() === birth.getMonth();
+        }
+
+        // Get birthday status
+        function getBirthdayStatus(birthDate) {
+            const days = daysUntilBirthday(birthDate);
+            
+            if (days === 0) return 'today';
+            if (days <= 7) return 'upcoming';
+            return 'future';
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            document.body.appendChild(confetti);
+            
+            for (let i = 0; i < 50; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + '%';
+                piece.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 60%)`;
+                piece.style.animationDelay = Math.random() * 2 + 's';
+                piece.style.animationDuration = (Math.random() * 2 + 3) + 's';
+                confetti.appendChild(piece);
+            }
+            
+            setTimeout(() => {
+                document.body.removeChild(confetti);
+            }, 5000);
+        }
+
+        // Sort birthdays
+        function sortBirthdays(type) {
+            currentSort = type;
+            
+            // Update active sort button
+            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            filterAndRenderBirthdays();
+        }
+
+        // Filter birthdays based on search
+        function filterBirthdays() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            filteredBirthdays = birthdays.filter(birthday => 
+                birthday.name.toLowerCase().includes(searchTerm)
+            );
+            renderBirthdays();
+        }
+
+        // Filter and render birthdays
+        function filterAndRenderBirthdays() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            filteredBirthdays = birthdays.filter(birthday => 
+                birthday.name.toLowerCase().includes(searchTerm)
+            );
+            
+            // Sort filtered birthdays
+            switch (currentSort) {
+                case 'name':
+                    filteredBirthdays.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 'age':
+                    filteredBirthdays.sort((a, b) => calculateAge(b.birthDate) - calculateAge(a.birthDate));
+                    break;
+                case 'month':
+                    filteredBirthdays.sort((a, b) => {
+                        const aMonth = new Date(a.birthDate).getMonth();
+                        const bMonth = new Date(b.birthDate).getMonth();
+                        return aMonth - bMonth;
+                    });
+                    break;
+                case 'upcoming':
+                default:
+                    filteredBirthdays.sort((a, b) => daysUntilBirthday(a.birthDate) - daysUntilBirthday(b.birthDate));
+                    break;
+            }
+            
+            renderBirthdays();
+        }
+
+        // Render birthdays
+        function renderBirthdays() {
+            const grid = document.getElementById('birthdayGrid');
+            
+            if (filteredBirthdays.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-plus"></i>
+                        <h3>${birthdays.length === 0 ? 'No birthdays added yet' : 'No birthdays match your search'}</h3>
+                        <p>${birthdays.length === 0 ? 'Add your first birthday to get started!' : 'Try a different search term'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = filteredBirthdays.map(birthday => {
+                const age = calculateAge(birthday.birthDate);
+                const days = daysUntilBirthday(birthday.birthDate);
+                const status = getBirthdayStatus(birthday.birthDate);
+                const formattedDate = formatDate(birthday.birthDate);
+                
+                let daysText = '';
+                if (days === 0) {
+                    daysText = '🎉 Today!';
+                } else if (days === 1) {
+                    daysText = 'Tomorrow';
+                } else {
+                    daysText = `${days} days`;
+                }
+                
+                return `
+                    <div class="birthday-card ${status}" data-id="${birthday.id}">
+                        <button class="delete-btn" onclick="confirmDelete(${birthday.id})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        
+                        <div class="card-header">
+                            <h3 class="birthday-name">${birthday.name}</h3>
+                            <div class="days-until ${status}">${daysText}</div>
+                        </div>
+                        
+                        <div class="birthday-date">
+                            <i class="fas fa-calendar-alt"></i> ${formattedDate}
+                        </div>
+                        
+                        <div class="age-display">
+                            ${age} ${age === 1 ? 'year' : 'years'} old
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                            <div style="font-size: 0.9rem; color: var(--text-muted);">
+                                <i class="fas fa-gift"></i> 
+                                ${status === 'today' ? 'Birthday today!' : 
+                                  status === 'upcoming' ? 'Coming up soon' : 
+                                  'Future celebration'}
+                            </div>
+                            ${status === 'today' ? '<div style="font-size: 1.2rem;">🎂🎈🎊</div>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add staggered animation to cards
+            const cards = grid.querySelectorAll('.birthday-card');
+            cards.forEach((card, index) => {
+                card.style.animation = 'none';
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.animation = '';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                    card.style.transition = 'all 0.5s ease';
+                }, index * 100);
+            });
+        }
+
+        // Confirm delete
+        function confirmDelete(id) {
+            const birthday = birthdays.find(b => b.id === id);
+            if (birthday && confirm(`Are you sure you want to remove ${birthday.name}'s birthday?`)) {
+                removeBirthday(id);
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const totalBirthdays = birthdays.length;
+            const upcomingCount = birthdays.filter(b => isBirthdayThisMonth(b.birthDate)).length;
+            const todayCount = birthdays.filter(b => isBirthdayToday(b.birthDate)).length;
+            const averageAge = totalBirthdays > 0 ? 
+                Math.round(birthdays.reduce((sum, b) => sum + calculateAge(b.birthDate), 0) / totalBirthdays) : 0;
+            
+            document.getElementById('totalBirthdays').textContent = totalBirthdays;
+            document.getElementById('upcomingCount').textContent = upcomingCount;
+            document.getElementById('todayCount').textContent = todayCount;
+            document.getElementById('averageAge').textContent = averageAge;
+            
+            // Animate numbers
+            animateNumber('totalBirthdays', totalBirthdays);
+            animateNumber('upcomingCount', upcomingCount);
+            animateNumber('todayCount', todayCount);
+            animateNumber('averageAge', averageAge);
+        }
+
+        // Animate number counting
+        function animateNumber(elementId, targetNumber) {
+            const element = document.getElementById(elementId);
+            const startNumber = 0;
+            const duration = 1000;
+            const startTime = performance.now();
+            
+            function updateNumber(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const currentNumber = Math.floor(startNumber + (targetNumber - startNumber) * progress);
+                
+                element.textContent = currentNumber;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                }
+            }
+            
+            requestAnimationFrame(updateNumber);
+        }
+
+        // Create floating particles
+        function createFloatingParticles() {
+            const container = document.getElementById('floatingParticles');
+            
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // Handle Enter key in input fields
+        function handleEnterKey(event) {
+            if (event.key === 'Enter') {
+                addBirthday();
+            }
+        }
+
+        // Check for birthdays today and show notifications
+        function checkTodaysBirthdays() {
+            const todaysBirthdays = birthdays.filter(b => isBirthdayToday(b.birthDate));
+            
+            todaysBirthdays.forEach((birthday, index) => {
+                setTimeout(() => {
+                    showNotification(`🎉 Today is ${birthday.name}'s birthday!`, 'success');
+                    createConfetti();
+                }, index * 2000);
+            });
+        }
+
+        // Handle window resize for Three.js
+        function handleResize() {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+        // Export data
+        function exportData() {
+            const dataStr = JSON.stringify(birthdays, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'birthdays_backup.json';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showNotification('Data exported successfully!', 'success');
+        }
+
+        // Import data
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        birthdays = [...birthdays, ...importedData];
+                        saveBirthdays();
+                        filterAndRenderBirthdays();
+                        updateStats();
+                        showNotification('Data imported successfully!', 'success');
+                    } else {
+                        showNotification('Invalid file format!', 'error');
+                    }
+                } catch (error) {
+                    showNotification('Error reading file!', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Initialize app
+        function init() {
+            loadTheme();
+            initBackground();
+            createFloatingParticles();
+            filterAndRenderBirthdays();
+            updateStats();
+            checkTodaysBirthdays();
+            
+            // Add event listeners
+            document.getElementById('personName').addEventListener('keypress', handleEnterKey);
+            document.getElementById('birthDate').addEventListener('keypress', handleEnterKey);
+            window.addEventListener('resize', handleResize);
+            
+            // Auto-save and periodic updates
+            setInterval(() => {
+                updateStats();
+                // Check for new birthdays every hour
+                checkTodaysBirthdays();
+            }, 3600000);
+        }
+
+        // Add export/import buttons (optional enhancement)
+        function addExportImportButtons() {
+            const header = document.querySelector('.header');
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.style.marginTop = '20px';
+            buttonsContainer.innerHTML = `
+                <button class="btn btn-primary" onclick="exportData()" style="margin-right: 10px;">
+                    <i class="fas fa-download"></i> Export Data
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+                <button class="btn btn-primary" onclick="document.getElementById('importFile').click()">
+                    <i class="fas fa-upload"></i> Import Data
+                </button>
+            `;
+            header.appendChild(buttonsContainer);
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            addExportImportButtons();
+        });
+
+        // Service Worker for offline functionality (optional)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>
